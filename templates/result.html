@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result - Virtual Try-On AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1 class="neon-text">Reality Transformed</h1>
+        <div class="image-container">
+            <div class="image-box">
+                <h2>Original Image</h2>
+                <img src="{{ url_for('static', filename='uploads/' + original_image) }}" alt="Original Image">
+            </div>
+            <div class="image-box">
+                <h2>Transformed Image</h2>
+                <img src="{{ url_for('static', filename='uploads/' + processed_image) }}" alt="Transformed Image">
+            </div>
+        </div>
+        <div class="button-container">
+            <a href="{{ url_for('upload') }}" class="button">Try Another Image</a>
+            <a href="{{ url_for('logout') }}" class="button">Exit Simulation</a>
+        </div>
+    </div>
+</body>
+</html>
