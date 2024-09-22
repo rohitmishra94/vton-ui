@@ -9,9 +9,21 @@
 <body>
     <div class="container">
         <h1 class="neon-text">Virtual Try-On AI</h1>
-        <h2>Upload Your Image</h2>
+        <h2>Upload Your Images</h2>
         <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="file" accept="image/*" required>
+            <label for="person_image">Person Image:</label>
+            <input type="file" name="person_image" id="person_image" accept="image/*" required>
+            
+            <label for="cloth_image">Cloth Image:</label>
+            <input type="file" name="cloth_image" id="cloth_image" accept="image/*" required>
+            
+            <label for="cloth_type">Cloth Type:</label>
+            <select name="cloth_type" id="cloth_type">
+                <option value="upper">Upper Body</option>
+                <option value="lower">Lower Body</option>
+                <option value="full">Full Body</option>
+            </select>
+            
             <input type="submit" value="Transform Reality">
         </form>
         <a href="{{ url_for('logout') }}" class="button">Exit Simulation</a>

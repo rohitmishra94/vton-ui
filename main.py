@@ -5,7 +5,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 import uuid
-from PIL import Image, ImageEnhance
+import requests
+import io
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -15,6 +16,8 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+API_URL = 'https://uskb92zf7oamx1-8000.proxy.runpod.net/try_on/'
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,34 +65,62 @@ def logout():
 @login_required
 def upload():
     if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part')
+        if 'person_image' not in request.files or 'cloth_image' not in request.files:
+            flash('Missing required files')
             return redirect(request.url)
-        file = request.files['file']
-        if file.filename == '':
+        
+        person_image = request.files['person_image']
+        cloth_image = request.files['cloth_image']
+        cloth_type = request.form.get('cloth_type', 'upper')  # Default to 'upper' if not specified
+        
+        if person_image.filename == '' or cloth_image.filename == '':
             flash('No selected file')
             return redirect(request.url)
-        if file:
-            filename = secure_filename(file.filename)
-            unique_filename = f"{uuid.uuid4()}_{filename}"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-            file.save(file_path)
-            processed_image = process_image(file_path)
-            return render_template('result.html', original_image=unique_filename, processed_image=processed_image)
+        
+        if person_image and cloth_image:
+            person_filename = secure_filename(person_image.filename)
+            cloth_filename = secure_filename(cloth_image.filename)
+            
+            person_unique_filename = f"{uuid.uuid4()}_{person_filename}"
+            cloth_unique_filename = f"{uuid.uuid4()}_{cloth_filename}"
+            
+            person_file_path = os.path.join(app.config['UPLOAD_FOLDER'], person_unique_filename)
+            cloth_file_path = os.path.join(app.config['UPLOAD_FOLDER'], cloth_unique_filename)
+            
+            person_image.save(person_file_path)
+            cloth_image.save(cloth_file_path)
+            
+            processed_image = process_image(person_file_path, cloth_file_path, cloth_type)
+            return render_template('result.html', 
+                                   original_image=person_unique_filename, 
+                                   processed_image=processed_image,
+                                   cloth_image=cloth_unique_filename)
+    
     return render_template('upload.html')
 
-def process_image(file_path):
-    # This is a simple image processing function
-    # In a real app, you'd integrate with an AI model for virtual try-on
-    img = Image.open(file_path)
-    enhancer = ImageEnhance.Brightness(img)
-    enhanced_img = enhancer.enhance(1.5)  # Increase brightness by 50%
-    
-    processed_filename = f"processed_{os.path.basename(file_path)}"
-    processed_path = os.path.join(app.config['UPLOAD_FOLDER'], processed_filename)
-    enhanced_img.save(processed_path)
-    
-    return processed_filename
+def process_image(person_file_path, cloth_file_path, cloth_type):
+    with open(person_file_path, 'rb') as person_file, open(cloth_file_path, 'rb') as cloth_file:
+        files = {
+            'person_image': (os.path.basename(person_file_path), person_file, 'image/jpeg'),
+            'cloth_image': (os.path.basename(cloth_file_path), cloth_file, 'image/jpeg')
+        }
+        data = {'cloth_type': cloth_type}
+        
+        response = requests.post(API_URL, files=files, data=data)
+        
+        if response.status_code == 200:
+            # Assuming the API returns the processed image directly
+            processed_filename = f"processed_{os.path.basename(person_file_path)}"
+            processed_path = os.path.join(app.config['UPLOAD_FOLDER'], processed_filename)
+            
+            with open(processed_path, 'wb') as f:
+                f.write(response.content)
+            
+            return processed_filename
+        else:
+            # Handle error
+            print(f"API request failed with status code: {response.status_code}")
+            return None
 
 if __name__ == '__main__':
     with app.app_context():
