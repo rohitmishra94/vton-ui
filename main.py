@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,7 +6,6 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 import requests
-import io
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -66,16 +65,14 @@ def logout():
 def upload():
     if request.method == 'POST':
         if 'person_image' not in request.files or 'cloth_image' not in request.files:
-            flash('Missing required files')
-            return redirect(request.url)
+            return jsonify({'error': 'Missing required files'}), 400
         
         person_image = request.files['person_image']
         cloth_image = request.files['cloth_image']
-        cloth_type = request.form.get('cloth_type', 'upper')  # Default to 'upper' if not specified
+        cloth_type = request.form.get('cloth_type', 'upper')
         
         if person_image.filename == '' or cloth_image.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
+            return jsonify({'error': 'No selected file'}), 400
         
         if person_image and cloth_image:
             person_filename = secure_filename(person_image.filename)
@@ -90,11 +87,14 @@ def upload():
             person_image.save(person_file_path)
             cloth_image.save(cloth_file_path)
             
-            processed_image = process_image(person_file_path, cloth_file_path, cloth_type)
-            return render_template('result.html', 
-                                   original_image=person_unique_filename, 
-                                   processed_image=processed_image,
-                                   cloth_image=cloth_unique_filename)
+            try:
+                processed_image = process_image(person_file_path, cloth_file_path, cloth_type)
+                return render_template('result.html', 
+                                       original_image=person_unique_filename,
+                                       cloth_image=cloth_unique_filename,
+                                       processed_image=processed_image)
+            except Exception as e:
+                return jsonify({'error': f"Error processing image: {str(e)}"}), 500
     
     return render_template('upload.html')
 
@@ -109,7 +109,6 @@ def process_image(person_file_path, cloth_file_path, cloth_type):
         response = requests.post(API_URL, files=files, data=data)
         
         if response.status_code == 200:
-            # Assuming the API returns the processed image directly
             processed_filename = f"processed_{os.path.basename(person_file_path)}"
             processed_path = os.path.join(app.config['UPLOAD_FOLDER'], processed_filename)
             
@@ -118,9 +117,7 @@ def process_image(person_file_path, cloth_file_path, cloth_type):
             
             return processed_filename
         else:
-            # Handle error
-            print(f"API request failed with status code: {response.status_code}")
-            return None
+            raise Exception(f"API request failed with status code: {response.status_code}")
 
 if __name__ == '__main__':
     with app.app_context():

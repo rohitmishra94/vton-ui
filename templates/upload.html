@@ -5,28 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload - Virtual Try-On AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            justify-content: space-between;
+            padding: 2rem;
+        }
+        .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid var(--neon-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .button-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="neon-text">Virtual Try-On AI</h1>
-        <h2>Upload Your Images</h2>
-        <form method="POST" enctype="multipart/form-data">
-            <label for="person_image">Person Image:</label>
-            <input type="file" name="person_image" id="person_image" accept="image/*" required>
-            
-            <label for="cloth_image">Cloth Image:</label>
-            <input type="file" name="cloth_image" id="cloth_image" accept="image/*" required>
-            
-            <label for="cloth_type">Cloth Type:</label>
-            <select name="cloth_type" id="cloth_type">
-                <option value="upper">Upper Body</option>
-                <option value="lower">Lower Body</option>
-                <option value="full">Full Body</option>
-            </select>
-            
-            <input type="submit" value="Transform Reality">
-        </form>
-        <a href="{{ url_for('logout') }}" class="button">Exit Simulation</a>
+        <div class="content">
+            <h1 class="neon-text">Virtual Try-On AI</h1>
+            <h2>Upload Your Images</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <label for="person_image">Person Image:</label>
+                <input type="file" name="person_image" id="person_image" accept="image/*" required>
+                
+                <label for="cloth_image">Cloth Image:</label>
+                <input type="file" name="cloth_image" id="cloth_image" accept="image/*" required>
+                
+                <label for="cloth_type">Cloth Type:</label>
+                <select name="cloth_type" id="cloth_type">
+                    <option value="upper">Upper Body</option>
+                    <option value="lower">Lower Body</option>
+                    <option value="full">Full Body</option>
+                </select>
+                
+                <input type="submit" value="Transform Reality">
+            </form>
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Transforming reality... Please wait.</p>
+            </div>
+        </div>
+        <div class="button-container">
+            <a href="{{ url_for('logout') }}" class="button">Exit Simulation</a>
+        </div>
     </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            var loadingDiv = document.querySelector('.loading');
+            var form = this;
+
+            loadingDiv.style.display = 'block';
+            form.style.display = 'none';
+
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingDiv.style.display = 'none';
+                form.style.display = 'block';
+                alert('An error occurred. Please try again.');
+            });
+        });
+    </script>
 </body>
 </html>

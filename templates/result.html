@@ -5,26 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Result - Virtual Try-On AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .image-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .image-box h2 {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .image-box img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1 class="neon-text">Reality Transformed</h1>
-        <div class="image-container">
+        <div class="result-grid">
             <div class="image-box">
-                <h2>Original Image</h2>
+                <h2 class="neon-text">Original Image</h2>
                 <img src="{{ url_for('static', filename='uploads/' + original_image) }}" alt="Original Image">
             </div>
             <div class="image-box">
-                <h2>Cloth Image</h2>
+                <h2 class="neon-text">Cloth Image</h2>
                 <img src="{{ url_for('static', filename='uploads/' + cloth_image) }}" alt="Cloth Image">
             </div>
             <div class="image-box">
-                <h2>Transformed Image</h2>
-                <img src="{{ url_for('static', filename='uploads/' + processed_image) }}" alt="Transformed Image">
+                <h2 class="neon-text">Processed Image</h2>
+                <img src="{{ url_for('static', filename='uploads/' + processed_image) }}" alt="Processed Image">
             </div>
         </div>
         <div class="button-container">
-            <a href="{{ url_for('upload') }}" class="button">Try Another Image</a>
+            <a href="{{ url_for('upload') }}" class="button">Try Another</a>
             <a href="{{ url_for('logout') }}" class="button">Exit Simulation</a>
         </div>
     </div>
