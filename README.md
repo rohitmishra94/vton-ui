@@ -1,1 +1,1 @@
-# vton-ui
+# virtual try-on app
